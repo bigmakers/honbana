@@ -75,9 +75,9 @@ App Store Connect の「App 情報」「価格および配信状況」「バー�
 
 | 項目 | 値 |
 |---|---|
-| サポート URL | https://github.com/<ユーザー名>/honbana/issues (任意) |
+| サポート URL | https://github.com/bigmakers/honbana/issues |
 | マーケティング URL | (任意) |
-| プライバシーポリシー URL | https://<ユーザー名>.github.io/honbana/privacy.html もしくは raw.githubusercontent.com の URL |
+| プライバシーポリシー URL | https://bigmakers.github.io/honbana/ |
 | 著作権表示 | 2026 Daisaku Harasaki |
 | 連絡先メール | bigmakers@gmail.com |
 
