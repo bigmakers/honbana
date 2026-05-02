@@ -502,6 +502,64 @@ def cmd_upload_screenshots(_args):
         sid = upload_screenshot(version_loc_id, f, i)
         print(f"  done id={sid}")
 
+def cmd_set_content_rights(_args):
+    """サードパーティコンテンツを使用していない宣言。"""
+    app_id = get_app_id()
+    body = {
+        "data": {
+            "type": "apps",
+            "id": app_id,
+            "attributes": {
+                "contentRightsDeclaration": "DOES_NOT_USE_THIRD_PARTY_CONTENT"
+            }
+        }
+    }
+    status, data = request("PATCH", f"/apps/{app_id}", body=body)
+    print(status, "OK" if status == 200 else json.dumps(data, indent=2, ensure_ascii=False))
+
+def cmd_set_price_free(_args):
+    """価格を無料に設定する (JPN, customerPrice=0)。"""
+    app_id = get_app_id()
+    # まず JPN 領土での free price point ID を取得
+    status, data = request("GET", f"/apps/{app_id}/appPricePoints",
+                           query={"filter[territory]": "JPN", "limit": "1"})
+    if status != 200 or not data.get("data"):
+        print("Failed to find price points:", data)
+        return
+    free_price_point = data["data"][0]
+    if free_price_point["attributes"]["customerPrice"] != "0":
+        print("First price point is not free, customerPrice=",
+              free_price_point["attributes"]["customerPrice"])
+    pp_id = free_price_point["id"]
+
+    body = {
+        "data": {
+            "type": "appPriceSchedules",
+            "relationships": {
+                "app": {"data": {"type": "apps", "id": app_id}},
+                "baseTerritory": {"data": {"type": "territories", "id": "JPN"}},
+                "manualPrices": {
+                    "data": [{"type": "appPrices", "id": "${price0}"}]
+                }
+            }
+        },
+        "included": [
+            {
+                "type": "appPrices",
+                "id": "${price0}",
+                "attributes": {"startDate": None},
+                "relationships": {
+                    "appPricePoint": {
+                        "data": {"type": "appPricePoints", "id": pp_id}
+                    },
+                    "territory": {"data": {"type": "territories", "id": "JPN"}}
+                }
+            }
+        ]
+    }
+    status, data = request("POST", "/appPriceSchedules", body=body)
+    print(status, "OK" if status in (200, 201) else json.dumps(data, indent=2, ensure_ascii=False))
+
 def cmd_set_review_details(_args):
     version = "1.0"
     app_id = get_app_id()
@@ -562,6 +620,8 @@ COMMANDS = {
     "set-copyright": cmd_set_copyright,
     "set-age-rating": cmd_set_age_rating,
     "set-review-details": cmd_set_review_details,
+    "set-content-rights": cmd_set_content_rights,
+    "set-price-free": cmd_set_price_free,
     "upload-screenshots": cmd_upload_screenshots,
     "status": cmd_status,
 }
