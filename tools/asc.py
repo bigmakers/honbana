@@ -575,7 +575,23 @@ def cmd_set_review_details(_args):
         "contactPhone": "+819012345678",  # placeholder — please update with real one
         "contactEmail": "bigmakers@gmail.com",
         "demoAccountRequired": False,
-        "notes": "本アプリはアカウント機能を持ちません。バーコード読み取り(ISBN)で書誌情報を取得し、ローカルに本のリストとメモ・写真を保存します。Amazon リンクには Amazon アソシエイト ID (bigdrives-22) が含まれます。"
+        "notes": (
+            "===== NO LOGIN / NO ACCOUNT =====\n"
+            "This app does NOT have any login screen, sign-in, sign-up, "
+            "authentication, or account-based feature. There is no demo "
+            "account because no account is required to use any feature.\n\n"
+            "All features are available immediately on first launch:\n"
+            "- Tab 1 (スキャン): scan a book ISBN barcode with the camera\n"
+            "- Tab 2 (検索): search book title/author via NDL public API\n"
+            "- Tab 3 (ライブラリ): list of books the user has saved locally\n\n"
+            "Tap a book → see details fetched from openBD or Google Books "
+            "(public APIs, no auth) → optionally save it to the local "
+            "SwiftData store with personal memo and photos. Amazon link "
+            "uses Amazon Associate tag bigdrives-22.\n\n"
+            "Please disregard any automated detection of a login — there "
+            "is none. All data is stored on-device only; no server is "
+            "operated by the developer."
+        )
     }
     if existing_id:
         body = {"data": {"type": "appStoreReviewDetails", "id": existing_id, "attributes": attrs}}
