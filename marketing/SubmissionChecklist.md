@@ -43,7 +43,48 @@
 
 ## 3. アプリビルドのアーカイブと TestFlight アップロード
 
-Xcode を使う方法（推奨）:
+### 3-A. CLI のみで完結する手順（推奨・自動化可）
+
+下記スクリプトを `tools/release.sh` 等に保存しておくと毎回1コマンドで終わる:
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+xcodegen generate
+
+xcodebuild -project BarcodeReview.xcodeproj \
+  -scheme BarcodeReview \
+  -configuration Release \
+  -destination 'generic/platform=iOS' \
+  -archivePath ./build/BarcodeReview.xcarchive \
+  -allowProvisioningUpdates \
+  DEVELOPMENT_TEAM=4666YH8WY2 \
+  archive
+
+xcodebuild -exportArchive \
+  -archivePath ./build/BarcodeReview.xcarchive \
+  -exportOptionsPlist marketing/ExportOptions.plist \
+  -exportPath ./build/Export \
+  -allowProvisioningUpdates
+```
+
+`build/Export/BarcodeReview.ipa` ができたら、**App Store Connect API キー** を発行して `altool` でアップロード:
+
+1. https://appstoreconnect.apple.com → Users and Access → Keys (Integrations) → 「+」
+2. Access: **App Manager**, ロール: **Developer** (最小権限ならこれで TestFlight アップロード可)
+3. Issuer ID と Key ID をメモ → `.p8` ファイルをダウンロード
+4. ファイルを `~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8` に保存
+5. アップロード:
+```bash
+xcrun altool --upload-app -f build/Export/BarcodeReview.ipa \
+  -t ios \
+  --apiKey <KEY_ID> --apiIssuer <ISSUER_ID>
+```
+
+### 3-B. Xcode を使う方法
+
+Xcode を使う方法:
 
 ```
 cd /Users/daisakuharasaki/バーコード書評
@@ -122,15 +163,18 @@ xcrun simctl boot "iPhone 17 Pro Max"
 open -a Simulator
 ```
 
-ビルドしてインストール:
+ビルドしてインストール、**サンプルデータ込みで起動**:
 ```
 cd /Users/daisakuharasaki/バーコード書評
 xcodebuild -project BarcodeReview.xcodeproj -scheme BarcodeReview \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max' \
   -configuration Debug -derivedDataPath ./build build
+xcrun simctl uninstall booted com.bigdrives.BarcodeReview
 xcrun simctl install booted ./build/Build/Products/Debug-iphonesimulator/BarcodeReview.app
-xcrun simctl launch booted com.bigdrives.BarcodeReview
+xcrun simctl launch booted com.bigdrives.BarcodeReview --seed-screenshots
 ```
+
+`--seed-screenshots` フラグで「吾輩は猫である」「海辺のカフカ」など 4 冊が自動投入された状態でアプリが立ち上がる（Debug ビルド時のみ有効、Release には影響なし）。
 
 スクリーンショットコマンド:
 ```
@@ -139,10 +183,19 @@ xcrun simctl io booted screenshot marketing/screenshots/03-search-results.png
 
 撮影リスト (5 枚):
 - [x] 01-scanner.png — スキャン画面 (起動直後)
-- [x] 02-library-empty.png — ライブラリ空状態
-- [ ] 03-search-results.png — 検索タブで「夏目漱石」と入力 → リターン → 結果が出た状態
-- [ ] 04-detail-with-memo.png — 詳細画面で書影・タイトル・メモ・画像つきの状態 (ライブラリに追加してメモを書く)
-- [ ] 05-share-sheet.png — 「SNS にシェア」をタップ → シェアシートが開いた状態
+- [x] 02-library-empty.png — ライブラリ空状態 (シード前に取得済み)
+- [ ] 03-library.png — シード状態のライブラリタブを開いた画面
+- [ ] 04-detail-with-memo.png — ライブラリの本をタップ → 詳細画面 (タイトル・著者・メモが見える状態)
+- [ ] 05-search-results.png — 検索タブで「夏目漱石」と入力 → リターン → 結果リスト
+
+撮影フロー（シミュレータの画面を操作 → 各画面で下記コマンド）:
+```
+xcrun simctl io booted screenshot marketing/screenshots/03-library.png
+xcrun simctl io booted screenshot marketing/screenshots/04-detail-with-memo.png
+xcrun simctl io booted screenshot marketing/screenshots/05-search-results.png
+```
+
+App Store Connect は同一サイズで 3 枚以上あれば提出可能なので、3-5 のうちフィットするものをアップロード。
 
 ---
 
