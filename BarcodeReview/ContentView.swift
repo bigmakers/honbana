@@ -1,9 +1,18 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var selection: Tab = .scan
+    @State private var selection: Tab
 
     enum Tab: Hashable { case scan, search, library }
+
+    init() {
+        let args = ProcessInfo.processInfo.arguments
+        let initial: Tab
+        if args.contains("--launch-tab=library") { initial = .library }
+        else if args.contains("--launch-tab=search") { initial = .search }
+        else { initial = .scan }
+        _selection = State(initialValue: initial)
+    }
 
     var body: some View {
         TabView(selection: $selection) {

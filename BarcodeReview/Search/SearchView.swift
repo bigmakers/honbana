@@ -6,6 +6,15 @@ struct SearchView: View {
     @State private var state: SearchState = .idle
     @State private var task: Task<Void, Never>?
 
+    private var launchSearchQuery: String? {
+        for arg in ProcessInfo.processInfo.arguments {
+            if arg.hasPrefix("--launch-search=") {
+                return String(arg.dropFirst("--launch-search=".count))
+            }
+        }
+        return nil
+    }
+
     var body: some View {
         List {
             switch state {
@@ -47,6 +56,12 @@ struct SearchView: View {
         .onSubmit(of: .search) { runSearch() }
         .navigationDestination(for: String.self) { isbn in
             BookDetailView(isbn13: isbn)
+        }
+        .task {
+            if let q = launchSearchQuery, query.isEmpty {
+                query = q
+                runSearch()
+            }
         }
     }
 

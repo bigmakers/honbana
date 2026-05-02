@@ -12,6 +12,7 @@ struct ScannerView: View {
         case unsupportedHardware
         case permissionDenied
         case unavailable
+        case mock
     }
 
     var body: some View {
@@ -70,6 +71,8 @@ struct ScannerView: View {
                     systemImage: "exclamationmark.triangle",
                     description: Text("シミュレータでは使えません。実機で試してください")
                 )
+            case .mock:
+                MockScannerView()
             }
         }
         .navigationTitle("スキャン")
@@ -81,6 +84,12 @@ struct ScannerView: View {
     }
 
     private func prepare() async {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--seed-screenshots") {
+            status = .mock
+            return
+        }
+        #endif
         guard DataScannerViewController.isSupported else {
             status = .unsupportedHardware
             return
@@ -101,6 +110,68 @@ struct ScannerView: View {
 
     private func readyOrUnavailable() -> ScannerStatus {
         DataScannerViewController.isAvailable ? .ready : .unavailable
+    }
+}
+
+/// App Store スクリーンショット用、カメラ非対応シミュレータでも見栄えがするモックスキャナ画面。
+private struct MockScannerView: View {
+    var body: some View {
+        ZStack {
+            LinearGradient(colors: [Color(white: 0.18), Color(white: 0.05)],
+                           startPoint: .top, endPoint: .bottom)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Text("978 / 979 で始まる本のバーコードを映してください")
+                    .font(.callout.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 10)
+                    .background(.thinMaterial.opacity(0.9), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.top, 16)
+
+                Spacer()
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .fill(Color.white.opacity(0.95))
+                        .frame(width: 320, height: 180)
+                        .shadow(radius: 12)
+
+                    VStack(spacing: 12) {
+                        // バーコードのストライプ模様
+                        HStack(spacing: 2) {
+                            ForEach(0..<60, id: \.self) { i in
+                                Rectangle()
+                                    .fill(.black)
+                                    .frame(width: stripeWidth(i), height: 90)
+                            }
+                        }
+                        Text("9 784101 001036")
+                            .font(.system(size: 18, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.black)
+                    }
+
+                    RoundedRectangle(cornerRadius: 22, style: .continuous)
+                        .stroke(Color.yellow, lineWidth: 4)
+                        .frame(width: 340, height: 200)
+                }
+
+                Spacer()
+
+                Text("黄色い枠が出たらタップでも確定できます")
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.85))
+                    .padding(.bottom, 36)
+            }
+        }
+    }
+
+    private func stripeWidth(_ i: Int) -> CGFloat {
+        // 簡易乱数で擬似的なバーコードに見せる
+        let pattern: [CGFloat] = [1, 2, 1, 3, 1, 1, 4, 2, 1, 1, 2, 1, 3, 2, 1]
+        return pattern[i % pattern.count]
     }
 }
 
