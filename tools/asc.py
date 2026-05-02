@@ -502,6 +502,35 @@ def cmd_upload_screenshots(_args):
         sid = upload_screenshot(version_loc_id, f, i)
         print(f"  done id={sid}")
 
+def cmd_set_review_details(_args):
+    version = "1.0"
+    app_id = get_app_id()
+    v = find_version(app_id, version)
+    if not v:
+        sys.exit("version not found")
+    # Check existing review detail
+    status, data = request("GET", f"/appStoreVersions/{v['id']}/appStoreReviewDetail")
+    existing_id = data.get("data", {}).get("id") if data and data.get("data") else None
+    attrs = {
+        "contactFirstName": "Daisaku",
+        "contactLastName": "Harasaki",
+        "contactPhone": "+819012345678",  # placeholder — please update with real one
+        "contactEmail": "bigmakers@gmail.com",
+        "demoAccountRequired": False,
+        "notes": "本アプリはアカウント機能を持ちません。バーコード読み取り(ISBN)で書誌情報を取得し、ローカルに本のリストとメモ・写真を保存します。Amazon リンクには Amazon アソシエイト ID (bigdrives-22) が含まれます。"
+    }
+    if existing_id:
+        body = {"data": {"type": "appStoreReviewDetails", "id": existing_id, "attributes": attrs}}
+        status, data = request("PATCH", f"/appStoreReviewDetails/{existing_id}", body=body)
+    else:
+        body = {"data": {"type": "appStoreReviewDetails",
+                          "attributes": attrs,
+                          "relationships": {
+                              "appStoreVersion": {"data": {"type": "appStoreVersions", "id": v["id"]}}
+                          }}}
+        status, data = request("POST", "/appStoreReviewDetails", body=body)
+    print(status, "OK" if status in (200, 201) else json.dumps(data, indent=2, ensure_ascii=False))
+
 def cmd_status(_args):
     app_id = get_app_id()
     if not app_id:
@@ -532,6 +561,7 @@ COMMANDS = {
     "set-privacy-url": cmd_set_privacy_url,
     "set-copyright": cmd_set_copyright,
     "set-age-rating": cmd_set_age_rating,
+    "set-review-details": cmd_set_review_details,
     "upload-screenshots": cmd_upload_screenshots,
     "status": cmd_status,
 }
