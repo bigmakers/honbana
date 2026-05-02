@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ホンダナ — Privacy Policy</title>
+<style>
+  body { font-family: -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+         max-width: 720px; margin: 32px auto; padding: 0 20px; color: #222;
+         line-height: 1.7; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.15rem; margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 4px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #ddd; padding: 6px 10px; text-align: left; }
+  code { background: #f5f5f5; padding: 1px 5px; border-radius: 4px; }
+  a { color: #0a66c2; }
+  hr { border: none; border-top: 1px solid #eee; margin: 32px 0; }
+  .lang-switch { text-align: right; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+<p class="lang-switch"><a href="#en">English summary ↓</a></p>
+<h1>プライバシーポリシー — ホンダナ</h1>
+<p>最終更新日: 2026年5月3日</p>
+<p>このページは、iOS アプリ「ホンダナ」のプライバシーポリシーです。本アプリの開発者はあなたのプライバシーを尊重し、できるだけ少ない情報のみを取り扱います。</p>
+
+<h2>1. 開発者が収集しない情報</h2>
+<ul>
+  <li>氏名、メールアドレス、電話番号などの個人情報</li>
+  <li>アカウント情報（ログイン機能はありません）</li>
+  <li>位置情報</li>
+  <li>広告識別子 (IDFA) などのトラッキング情報</li>
+  <li>連絡先・写真ライブラリ全体</li>
+</ul>
+
+<h2>2. 端末内に保存される情報</h2>
+<p>以下はあなたの端末内 (Apple SwiftData) にのみ保存され、外部に送信されません。アプリを削除すると消去されます。</p>
+<ul>
+  <li>保存した本（ISBN、タイトル、著者、出版社、書影URL）</li>
+  <li>本に対するあなたのメモ（テキスト）</li>
+  <li>本に紐づけて添付した画像</li>
+</ul>
+
+<h2>3. 外部 API への送信情報</h2>
+<p>書誌取得・検索のため、以下の公開 API へ ISBN や検索キーワードを HTTPS で送信します。あなたの個人を識別する情報は送信されません。</p>
+<table>
+  <tr><th>送信先</th><th>送信されるデータ</th><th>用途</th></tr>
+  <tr><td>openBD (api.openbd.jp)</td><td>ISBN</td><td>日本語書籍の書誌取得</td></tr>
+  <tr><td>国立国会図書館サーチ (ndlsearch.ndl.go.jp)</td><td>検索キーワード</td><td>書名・著者検索</td></tr>
+  <tr><td>Google Books API (googleapis.com)</td><td>ISBN</td><td>openBD で見つからない時のフォールバック</td></tr>
+  <tr><td>Amazon (amazon.co.jp)</td><td>ISBN（あなたが「Safari で開く」をタップした時のみ）</td><td>商品ページ表示</td></tr>
+</table>
+
+<h2>4. Amazon アソシエイトプログラムについて</h2>
+<p>「Amazon を Safari で開く」「SNS にシェア」機能から生成される Amazon の URL には、開発者の Amazon アソシエイト ID (<code>bigdrives-22</code>) が含まれます。あなたがそのリンク経由で購入された場合、開発者は紹介料を受け取ります。リンクの仕組み上 Amazon 側がクッキー等であなたを追跡する可能性があり、詳細は Amazon.co.jp のプライバシー規約をご確認ください。</p>
+
+<h2>5. カメラと写真ライブラリの利用</h2>
+<ul>
+  <li><strong>カメラ</strong>: 本のバーコード(ISBN)読み取り、メモ用写真の撮影</li>
+  <li><strong>写真ライブラリ</strong>: メモに添付する画像の選択</li>
+</ul>
+<p>取得した画像は端末内にのみ保存され、外部に送信されません。アクセスはいつでも iOS の「設定」から取り消せます。</p>
+
+<h2>6. 子どものプライバシー</h2>
+<p>本アプリは年齢制限なく利用できますが、13 歳未満が利用される場合は保護者の責任のもとでご利用ください。</p>
+
+<h2>7. ポリシーの変更</h2>
+<p>必要に応じて改定し、リポジトリでお知らせします。</p>
+
+<h2>8. お問い合わせ</h2>
+<p>開発者: Daisaku Harasaki / メール: bigmakers@gmail.com</p>
+
+<hr id="en">
+
+<h1>Privacy Policy — Bookshelf (ホンダナ)</h1>
+<p>Last updated: May 3, 2026</p>
+
+<h2>What we don't collect</h2>
+<p>The "Bookshelf" iOS app does not collect any personal information. There is no login, no account, no analytics tracking, and no advertising identifier usage.</p>
+
+<h2>What stays on your device</h2>
+<p>Your saved books, notes and attached photos are stored only on your device using Apple's SwiftData framework, and are removed when you delete the app.</p>
+
+<h2>What is sent to external services</h2>
+<p>Only ISBN numbers or search keywords are sent over HTTPS to public book metadata APIs (openBD, NDL Search, Google Books) to retrieve information you requested. No user identifiers are sent.</p>
+
+<h2>Amazon affiliate</h2>
+<p>URLs the app generates for Amazon include the developer's Amazon Associate tag (<code>bigdrives-22</code>); purchases made through these links may earn the developer a commission.</p>
+
+<h2>Camera and photo access</h2>
+<p>Camera access is used for ISBN scanning and photographing memos. Photo library access is used to attach images to your memos. Captured/picked images stay on your device.</p>
+
+<h2>Contact</h2>
+<p>bigmakers@gmail.com</p>
+</body>
+</html>

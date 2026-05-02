@@ -1,0 +1,3 @@
+"CFBundleDisplayName" = "Bookshelf";
+"CFBundleName" = "Bookshelf";
+"NSCameraUsageDescription" = "Used to scan book barcodes (ISBN).";

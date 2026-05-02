@@ -1,0 +1,35 @@
+# Xcode
+build/
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+
+# XcodeGen 生成物 (project.yml から再生成可能なので含めない)
+BarcodeReview.xcodeproj/
+
+# macOS
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# CocoaPods (将来追加した場合)
+Pods/
+
+# iOS app build artifacts
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Provisioning
+*.mobileprovision
+
+# 一時ファイル
+*.swp
+*.swo
+*~
