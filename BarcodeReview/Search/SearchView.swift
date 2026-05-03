@@ -58,10 +58,10 @@ struct SearchView: View {
         .searchable(text: $query, prompt: "書名 / 著者")
         .onSubmit(of: .search) { runSearch() }
         .navigationDestination(for: String.self) { isbn in
-            BookDetailView(isbn13: isbn)
+            BookDetailView(isbn13: isbn, selectedTab: $selectedTab)
         }
         .navigationDestination(item: $pushedISBN) { isbn in
-            BookDetailView(isbn13: isbn)
+            BookDetailView(isbn13: isbn, selectedTab: $selectedTab)
         }
         .task {
             if let q = launchSearchQuery, query.isEmpty {

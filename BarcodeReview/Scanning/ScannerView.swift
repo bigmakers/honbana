@@ -3,8 +3,14 @@ import VisionKit
 import AVFoundation
 
 struct ScannerView: View {
+    var selectedTab: Binding<AppTab>?
+
     @State private var detectedISBN: String?
     @State private var status: ScannerStatus = .checking
+
+    init(selectedTab: Binding<AppTab>? = nil) {
+        self.selectedTab = selectedTab
+    }
 
     enum ScannerStatus {
         case checking
@@ -78,7 +84,7 @@ struct ScannerView: View {
         .navigationTitle("スキャン")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestination(item: $detectedISBN) { isbn in
-            BookDetailView(isbn13: isbn)
+            BookDetailView(isbn13: isbn, selectedTab: selectedTab)
         }
         .task { await prepare() }
     }

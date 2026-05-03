@@ -19,7 +19,7 @@ struct ContentView: View {
     var body: some View {
         TabView(selection: $selection) {
             NavigationStack {
-                ScannerView()
+                ScannerView(selectedTab: $selection)
             }
             .tabItem { Label("スキャン", systemImage: "barcode.viewfinder") }
             .tag(AppTab.scan)

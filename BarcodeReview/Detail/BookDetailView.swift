@@ -4,9 +4,11 @@ import PhotosUI
 
 struct BookDetailView: View {
     let isbn13: String
+    var selectedTab: Binding<AppTab>?
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.openURL) private var openURL
+    @Environment(\.dismiss) private var dismiss
     @Query private var savedMatches: [SavedBook]
 
     @State private var loadState: LoadState = .loading
@@ -19,8 +21,11 @@ struct BookDetailView: View {
     @State private var manualAuthor: String = ""
     @State private var manualPublisher: String = ""
 
-    init(isbn13: String) {
+    @State private var justAddedToLibrary = false
+
+    init(isbn13: String, selectedTab: Binding<AppTab>? = nil) {
         self.isbn13 = isbn13
+        self.selectedTab = selectedTab
         let target = isbn13
         _savedMatches = Query(filter: #Predicate<SavedBook> { $0.isbn13 == target })
     }
@@ -42,6 +47,9 @@ struct BookDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
+                if justAddedToLibrary, selectedTab != nil {
+                    justAddedBanner
+                }
                 header
                 metadata
                 if case .notFound = loadState, savedBook == nil {
@@ -59,6 +67,44 @@ struct BookDetailView: View {
         .navigationTitle("詳細")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: isbn13) { await load() }
+        .animation(.spring(duration: 0.4), value: justAddedToLibrary)
+    }
+
+    private var justAddedBanner: some View {
+        VStack(spacing: 12) {
+            Label("ライブラリに追加しました", systemImage: "checkmark.seal.fill")
+                .font(.headline)
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            HStack(spacing: 8) {
+                Button {
+                    selectedTab?.wrappedValue = .library
+                    dismiss()
+                } label: {
+                    Label("ライブラリで見る", systemImage: "books.vertical")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.white)
+                .foregroundStyle(.green)
+
+                Button {
+                    dismiss()
+                } label: {
+                    Label("続けてスキャン", systemImage: "barcode.viewfinder")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.white)
+                .foregroundStyle(.white)
+            }
+        }
+        .padding(16)
+        .background(LinearGradient(colors: [Color.green, Color.green.opacity(0.85)],
+                                   startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: 14))
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 
     // MARK: - Sections
@@ -276,6 +322,8 @@ struct BookDetailView: View {
             Button {
                 let newBook = SavedBook(from: book)
                 modelContext.insert(newBook)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                justAddedToLibrary = true
             } label: {
                 Label("ライブラリに追加", systemImage: "bookmark")
                     .labelStyle(.titleAndIcon)
@@ -311,6 +359,8 @@ struct BookDetailView: View {
                     publisher: manualPublisher.trimmingCharacters(in: .whitespacesAndNewlines).nilIfEmpty
                 )
                 modelContext.insert(book)
+                UINotificationFeedbackGenerator().notificationOccurred(.success)
+                justAddedToLibrary = true
             } label: {
                 Label("ライブラリに追加", systemImage: "bookmark")
                     .frame(maxWidth: .infinity)
