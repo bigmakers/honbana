@@ -201,6 +201,18 @@ PROMO = "バーコードを読み取って一瞬で本を登録。読書メモ�
 SUPPORT_URL = "https://github.com/bigmakers/honbana/issues"
 MARKETING_URL = "https://github.com/bigmakers/honbana"
 
+WHATS_NEW_BY_VERSION = {
+    "1.1": (
+        "新機能とUX改善:\n"
+        "・ライブラリを「本棚ビュー」で表示できるようになりました(リスト表示と切替可能)\n"
+        "・検索結果に「ライブラリにあり」バッジを表示。重複追加を防げます\n"
+        "・ISBN を直接入力して詳細画面を開けるように\n"
+        "・スキャン後に保存すると「ライブラリで見る」「続けてスキャン」のCTAバナーが表示されます\n"
+        "・スキャン画面右上にライブラリへのクイックアクセスボタンを追加\n"
+        "・ライブラリ内全文検索 (書名/著者/メモ) を追加\n"
+    )
+}
+
 def cmd_set_localization(args):
     version = args[0] if args else "1.0.0"
     app_id = get_app_id()
@@ -219,6 +231,8 @@ def cmd_set_localization(args):
         "supportUrl": SUPPORT_URL,
         "marketingUrl": MARKETING_URL,
     }
+    if version in WHATS_NEW_BY_VERSION:
+        body_attrs["whatsNew"] = WHATS_NEW_BY_VERSION[version]
     if ja:
         body = {
             "data": {
