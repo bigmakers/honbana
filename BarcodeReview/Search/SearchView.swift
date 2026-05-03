@@ -1,10 +1,23 @@
 import SwiftUI
+import SwiftData
 
 struct SearchView: View {
+    @Binding var selectedTab: AppTab
+
     @State private var query: String = ""
     @State private var submitted: String = ""
     @State private var state: SearchState = .idle
     @State private var task: Task<Void, Never>?
+
+    @State private var showingISBNSheet = false
+    @State private var manualISBN = ""
+    @State private var pushedISBN: String?
+
+    @Query private var savedBooks: [SavedBook]
+
+    private var savedISBNs: Set<String> {
+        Set(savedBooks.map(\.isbn13))
+    }
 
     private var launchSearchQuery: String? {
         for arg in ProcessInfo.processInfo.arguments {
@@ -19,22 +32,12 @@ struct SearchView: View {
         List {
             switch state {
             case .idle:
-                ContentUnavailableView(
-                    "本を検索",
-                    systemImage: "magnifyingglass",
-                    description: Text("書名・著者などで検索できます")
-                )
-                .listRowSeparator(.hidden)
+                idleSection
             case .loading:
                 HStack { Spacer(); ProgressView(); Spacer() }
                     .listRowSeparator(.hidden)
             case .empty:
-                ContentUnavailableView(
-                    "見つかりませんでした",
-                    systemImage: "books.vertical",
-                    description: Text("「\(submitted)」に一致する書籍はありません")
-                )
-                .listRowSeparator(.hidden)
+                emptySection
             case .failed(let message):
                 ContentUnavailableView(
                     "検索に失敗しました",
@@ -45,7 +48,7 @@ struct SearchView: View {
             case .loaded(let items):
                 ForEach(items, id: \.isbn13) { item in
                     NavigationLink(value: item.isbn13) {
-                        SearchRow(item: item)
+                        SearchRow(item: item, isInLibrary: savedISBNs.contains(item.isbn13))
                     }
                 }
             }
@@ -57,12 +60,73 @@ struct SearchView: View {
         .navigationDestination(for: String.self) { isbn in
             BookDetailView(isbn13: isbn)
         }
+        .navigationDestination(item: $pushedISBN) { isbn in
+            BookDetailView(isbn13: isbn)
+        }
         .task {
             if let q = launchSearchQuery, query.isEmpty {
                 query = q
                 runSearch()
             }
         }
+        .sheet(isPresented: $showingISBNSheet) {
+            ISBNInputSheet(initialValue: manualISBN) { isbn in
+                showingISBNSheet = false
+                pushedISBN = isbn
+            }
+            .presentationDetents([.medium])
+        }
+    }
+
+    // MARK: - Idle (検索前)
+
+    @ViewBuilder
+    private var idleSection: some View {
+        ContentUnavailableView {
+            Label("本を検索", systemImage: "magnifyingglass")
+        } description: {
+            Text("書名・著者などで検索できます")
+        } actions: {
+            Button {
+                showingISBNSheet = true
+            } label: {
+                Label("ISBN を直接入力", systemImage: "barcode")
+            }
+            .buttonStyle(.bordered)
+        }
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    // MARK: - Empty (結果0件)
+
+    @ViewBuilder
+    private var emptySection: some View {
+        ContentUnavailableView {
+            Label("見つかりませんでした", systemImage: "books.vertical")
+        } description: {
+            Text("「\(submitted)」に一致する書籍はありません")
+        } actions: {
+            VStack(spacing: 8) {
+                Button {
+                    showingISBNSheet = true
+                } label: {
+                    Label("ISBN を直接入力", systemImage: "barcode")
+                        .frame(maxWidth: 240)
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button {
+                    selectedTab = .scan
+                } label: {
+                    Label("バーコードをスキャン", systemImage: "barcode.viewfinder")
+                        .frame(maxWidth: 240)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
     }
 
     private func runSearch() {
@@ -80,7 +144,6 @@ struct SearchView: View {
                     return
                 }
 
-                // openBD で詳細(書影)を一括取得し、NDLの結果順を維持しつつ書影をマージ
                 let isbns = ndlResults.map(\.isbn13)
                 let openBDBooks = (try? await BookService.shared.fetchMany(isbns: isbns)) ?? []
                 let coverByISBN: [String: URL] = Dictionary(
@@ -100,7 +163,9 @@ struct SearchView: View {
                 await MainActor.run { state = .loaded(merged) }
             } catch let error as BookServiceError {
                 if Task.isCancelled { return }
-                await MainActor.run { state = .failed(error.errorDescription ?? "検索に失敗しました") }
+                await MainActor.run {
+                    state = .failed(error.errorDescription ?? "検索に失敗しました")
+                }
             } catch {
                 if Task.isCancelled { return }
                 await MainActor.run { state = .failed(error.localizedDescription) }
@@ -126,6 +191,7 @@ struct SearchRowItem: Hashable {
 
 private struct SearchRow: View {
     let item: SearchRowItem
+    let isInLibrary: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -141,7 +207,7 @@ private struct SearchRow: View {
                     placeholder
                 }
             }
-            .frame(width: 48, height: 68)
+            .frame(width: 52, height: 72)
             .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 4))
 
             VStack(alignment: .leading, spacing: 4) {
@@ -154,9 +220,12 @@ private struct SearchRow: View {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
-                Text(item.isbn13)
-                    .font(.caption2.monospaced())
-                    .foregroundStyle(.tertiary)
+                if isInLibrary {
+                    Label("ライブラリにあり", systemImage: "checkmark.seal.fill")
+                        .font(.caption2.weight(.semibold))
+                        .foregroundStyle(.green)
+                        .padding(.top, 2)
+                }
             }
             Spacer(minLength: 0)
         }
@@ -167,5 +236,51 @@ private struct SearchRow: View {
         Image(systemName: "book.closed")
             .foregroundStyle(.secondary)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - ISBN 直接入力シート
+
+private struct ISBNInputSheet: View {
+    let initialValue: String
+    let onSubmit: (String) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var input = ""
+
+    private var normalized: String { input.filter(\.isNumber) }
+    private var isValid: Bool {
+        normalized.count == 13 && (normalized.hasPrefix("978") || normalized.hasPrefix("979"))
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("978...", text: $input)
+                        .keyboardType(.numberPad)
+                        .textInputAutocapitalization(.never)
+                        .font(.body.monospaced())
+                } header: {
+                    Text("ISBN-13 (13桁)")
+                } footer: {
+                    Text("978 または 979 で始まる13桁の数字を入力してください。")
+                }
+            }
+            .navigationTitle("ISBN を入力")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("キャンセル") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("詳細を表示") {
+                        onSubmit(normalized)
+                    }
+                    .disabled(!isValid)
+                }
+            }
+            .onAppear { input = initialValue }
+        }
     }
 }

@@ -1,13 +1,15 @@
 import SwiftUI
 
-struct ContentView: View {
-    @State private var selection: Tab
+enum AppTab: String, Hashable {
+    case scan, search, library
+}
 
-    enum Tab: Hashable { case scan, search, library }
+struct ContentView: View {
+    @State private var selection: AppTab
 
     init() {
         let args = ProcessInfo.processInfo.arguments
-        let initial: Tab
+        let initial: AppTab
         if args.contains("--launch-tab=library") { initial = .library }
         else if args.contains("--launch-tab=search") { initial = .search }
         else { initial = .scan }
@@ -20,19 +22,19 @@ struct ContentView: View {
                 ScannerView()
             }
             .tabItem { Label("スキャン", systemImage: "barcode.viewfinder") }
-            .tag(Tab.scan)
+            .tag(AppTab.scan)
 
             NavigationStack {
-                SearchView()
+                SearchView(selectedTab: $selection)
             }
             .tabItem { Label("検索", systemImage: "magnifyingglass") }
-            .tag(Tab.search)
+            .tag(AppTab.search)
 
             NavigationStack {
-                LibraryView()
+                LibraryView(selectedTab: $selection)
             }
             .tabItem { Label("ライブラリ", systemImage: "books.vertical") }
-            .tag(Tab.library)
+            .tag(AppTab.library)
         }
     }
 }
