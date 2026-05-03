@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 import VisionKit
 import AVFoundation
 
@@ -7,6 +8,8 @@ struct ScannerView: View {
 
     @State private var detectedISBN: String?
     @State private var status: ScannerStatus = .checking
+
+    @Query private var savedBooks: [SavedBook]
 
     init(selectedTab: Binding<AppTab>? = nil) {
         self.selectedTab = selectedTab
@@ -83,6 +86,28 @@ struct ScannerView: View {
         }
         .navigationTitle("スキャン")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let selectedTab {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        selectedTab.wrappedValue = .library
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "books.vertical.fill")
+                            if !savedBooks.isEmpty {
+                                Text("\(savedBooks.count)")
+                                    .font(.caption.weight(.bold))
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 1)
+                                    .background(Color.accentColor, in: Capsule())
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                    }
+                    .accessibilityLabel(Text("ライブラリを開く"))
+                }
+            }
+        }
         .navigationDestination(item: $detectedISBN) { isbn in
             BookDetailView(isbn13: isbn, selectedTab: selectedTab)
         }
