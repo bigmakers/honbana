@@ -1,6 +1,5 @@
 import SwiftUI
 import SwiftData
-import VisionKit
 import AVFoundation
 
 struct ScannerView: View {
@@ -18,9 +17,8 @@ struct ScannerView: View {
     enum ScannerStatus {
         case checking
         case ready
-        case unsupportedHardware
+        case noCamera
         case permissionDenied
-        case unavailable
         case mock
     }
 
@@ -31,13 +29,13 @@ struct ScannerView: View {
                 ProgressView("カメラを準備中…")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .ready:
-                DataScannerRepresentable(detectedISBN: $detectedISBN)
+                BarcodeScannerRepresentable(detectedISBN: $detectedISBN)
                     .ignoresSafeArea(edges: .bottom)
                     .overlay(alignment: .top) {
                         VStack(spacing: 4) {
-                            Text("978 / 979 で始まる本のバーコードを映してください")
+                            Text("978 / 979 で始まる本のバーコードを枠内に映してください")
                                 .font(.callout.weight(.semibold))
-                            Text("黄色い枠が出たらタップでも確定できます")
+                            Text("ピントが合うと自動で読み取ります")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -48,12 +46,21 @@ struct ScannerView: View {
                         .padding(.top, 12)
                         .padding(.horizontal, 12)
                     }
-            case .unsupportedHardware:
-                ContentUnavailableView(
-                    "このデバイスではバーコード読み取りが使えません",
-                    systemImage: "barcode.viewfinder",
-                    description: Text("VisionKit のスキャナに対応していません")
-                )
+            case .noCamera:
+                ContentUnavailableView {
+                    Label("カメラが使えません", systemImage: "camera.fill")
+                } description: {
+                    Text("このデバイスではバーコードを撮影できません。検索タブから書名・著者で検索するか、ISBN を直接入力してください。")
+                } actions: {
+                    if let selectedTab {
+                        Button {
+                            selectedTab.wrappedValue = .search
+                        } label: {
+                            Label("検索を開く", systemImage: "magnifyingglass")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                }
             case .permissionDenied:
                 VStack(spacing: 16) {
                     Image(systemName: "camera.fill")
@@ -74,12 +81,6 @@ struct ScannerView: View {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-            case .unavailable:
-                ContentUnavailableView(
-                    "スキャナを起動できません",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text("シミュレータでは使えません。実機で試してください")
-                )
             case .mock:
                 MockScannerView()
             }
@@ -121,30 +122,28 @@ struct ScannerView: View {
             return
         }
         #endif
-        guard DataScannerViewController.isSupported else {
-            status = .unsupportedHardware
+        // シミュレータや背面カメラがない端末
+        guard AVCaptureDevice.default(for: .video) != nil else {
+            status = .noCamera
             return
         }
         let auth = AVCaptureDevice.authorizationStatus(for: .video)
         switch auth {
         case .notDetermined:
             let granted = await AVCaptureDevice.requestAccess(for: .video)
-            status = granted ? readyOrUnavailable() : .permissionDenied
+            status = granted ? .ready : .permissionDenied
         case .authorized:
-            status = readyOrUnavailable()
+            status = .ready
         case .denied, .restricted:
             status = .permissionDenied
         @unknown default:
             status = .permissionDenied
         }
     }
-
-    private func readyOrUnavailable() -> ScannerStatus {
-        DataScannerViewController.isAvailable ? .ready : .unavailable
-    }
 }
 
-/// App Store スクリーンショット用、カメラ非対応シミュレータでも見栄えがするモックスキャナ画面。
+// MARK: - Mock scanner (シミュレータ・スクショ用)
+
 private struct MockScannerView: View {
     var body: some View {
         ZStack {
@@ -171,7 +170,6 @@ private struct MockScannerView: View {
                         .shadow(radius: 12)
 
                     VStack(spacing: 12) {
-                        // バーコードのストライプ模様
                         HStack(spacing: 2) {
                             ForEach(0..<60, id: \.self) { i in
                                 Rectangle()
@@ -191,7 +189,7 @@ private struct MockScannerView: View {
 
                 Spacer()
 
-                Text("黄色い枠が出たらタップでも確定できます")
+                Text("ピントが合うと自動で読み取ります")
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(0.85))
                     .padding(.bottom, 36)
@@ -200,79 +198,32 @@ private struct MockScannerView: View {
     }
 
     private func stripeWidth(_ i: Int) -> CGFloat {
-        // 簡易乱数で擬似的なバーコードに見せる
         let pattern: [CGFloat] = [1, 2, 1, 3, 1, 1, 4, 2, 1, 1, 2, 1, 3, 2, 1]
         return pattern[i % pattern.count]
     }
 }
 
-private struct DataScannerRepresentable: UIViewControllerRepresentable {
+// MARK: - AVFoundation wrapper
+
+private struct BarcodeScannerRepresentable: UIViewRepresentable {
     @Binding var detectedISBN: String?
 
-    func makeCoordinator() -> Coordinator { Coordinator(parent: self) }
-
-    func makeUIViewController(context: Context) -> DataScannerViewController {
-        let controller = DataScannerViewController(
-            recognizedDataTypes: [.barcode(symbologies: [.ean13, .ean8, .upce])],
-            qualityLevel: .accurate,
-            recognizesMultipleItems: false,
-            isHighFrameRateTrackingEnabled: true,
-            isPinchToZoomEnabled: true,
-            isHighlightingEnabled: true
-        )
-        controller.delegate = context.coordinator
-        return controller
-    }
-
-    func updateUIViewController(_ uiViewController: DataScannerViewController, context: Context) {
-        if detectedISBN == nil {
-            if !uiViewController.isScanning {
-                try? uiViewController.startScanning()
-            }
-        } else {
-            if uiViewController.isScanning {
-                uiViewController.stopScanning()
-            }
-        }
-    }
-
-    final class Coordinator: NSObject, DataScannerViewControllerDelegate {
-        let parent: DataScannerRepresentable
-
-        init(parent: DataScannerRepresentable) {
-            self.parent = parent
-        }
-
-        func dataScanner(_ dataScanner: DataScannerViewController,
-                         didTapOn item: RecognizedItem) {
-            handle(item)
-        }
-
-        func dataScanner(_ dataScanner: DataScannerViewController,
-                         didAdd addedItems: [RecognizedItem],
-                         allItems: [RecognizedItem]) {
-            for item in addedItems where handle(item) { return }
-        }
-
-        func dataScanner(_ dataScanner: DataScannerViewController,
-                         didUpdate updatedItems: [RecognizedItem],
-                         allItems: [RecognizedItem]) {
-            for item in updatedItems where handle(item) { return }
-        }
-
-        @discardableResult
-        private func handle(_ item: RecognizedItem) -> Bool {
-            guard parent.detectedISBN == nil else { return false }
-            guard case .barcode(let barcode) = item,
-                  let payload = barcode.payloadStringValue else { return false }
-            let digits = payload.filter(\.isNumber)
-            guard digits.count == 13,
-                  digits.hasPrefix("978") || digits.hasPrefix("979") else { return false }
-            UINotificationFeedbackGenerator().notificationOccurred(.success)
+    func makeUIView(context: Context) -> CameraBarcodeScannerView {
+        let view = CameraBarcodeScannerView()
+        view.onISBN = { isbn in
             DispatchQueue.main.async {
-                self.parent.detectedISBN = digits
+                self.detectedISBN = isbn
             }
-            return true
+        }
+        view.startScanning()
+        return view
+    }
+
+    func updateUIView(_ uiView: CameraBarcodeScannerView, context: Context) {
+        if detectedISBN == nil {
+            uiView.resetForNextScan()
+        } else {
+            uiView.stopScanning()
         }
     }
 }
