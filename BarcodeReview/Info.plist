@@ -29,6 +29,8 @@
 	<false/>
 	<key>NSCameraUsageDescription</key>
 	<string>本のバーコードを読み取るためにカメラを使用します</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>メモに添付した画像を「写真」アプリに書き出すために使用します</string>
 	<key>UILaunchScreen</key>
 	<dict>
 		<key>UIColorName</key>

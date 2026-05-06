@@ -30,6 +30,7 @@ targets:
       path: BarcodeReview/Info.plist
       properties:
         NSCameraUsageDescription: "本のバーコードを読み取るためにカメラを使用します"
+        NSPhotoLibraryAddUsageDescription: "メモに添付した画像を「写真」アプリに書き出すために使用します"
         UILaunchScreen:
           UIColorName: ""
         UISupportedInterfaceOrientations:

@@ -22,6 +22,10 @@ struct BookDetailView: View {
     @State private var manualPublisher: String = ""
 
     @State private var justAddedToLibrary = false
+    @State private var galleryStartID: PersistentIdentifier?
+    @State private var isShowingGallery = false
+    @State private var isExportingPhotos = false
+    @State private var exportToast: String?
 
     init(isbn13: String, selectedTab: Binding<AppTab>? = nil) {
         self.isbn13 = isbn13
@@ -68,6 +72,19 @@ struct BookDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task(id: isbn13) { await load() }
         .animation(.spring(duration: 0.4), value: justAddedToLibrary)
+        .fullScreenCover(isPresented: $isShowingGallery) {
+            if let saved = savedBook {
+                PhotoGalleryView(
+                    images: saved.images.sorted { $0.addedAt < $1.addedAt },
+                    initialID: galleryStartID
+                )
+            }
+        }
+        .alert("写真エクスポート", isPresented: .constant(exportToast != nil)) {
+            Button("OK") { exportToast = nil }
+        } message: {
+            Text(exportToast ?? "")
+        }
     }
 
     private var justAddedBanner: some View {
@@ -222,6 +239,20 @@ struct BookDetailView: View {
             HStack {
                 Text("画像").font(.headline)
                 Spacer()
+                if !saved.images.isEmpty {
+                    Button {
+                        Task { await exportAllImages(saved) }
+                    } label: {
+                        Label(
+                            isExportingPhotos ? "保存中…" : "すべて写真に保存",
+                            systemImage: "square.and.arrow.down.on.square"
+                        )
+                        .labelStyle(.titleAndIcon)
+                        .font(.footnote)
+                    }
+                    .disabled(isExportingPhotos)
+                    .buttonStyle(.bordered)
+                }
                 Menu {
                     if UIImagePickerController.isSourceTypeAvailable(.camera) {
                         Button {
@@ -284,27 +315,33 @@ struct BookDetailView: View {
     @ViewBuilder
     private func imageThumbnail(_ memoImage: MemoImage) -> some View {
         if let ui = UIImage(data: memoImage.data) {
-            Image(uiImage: ui)
-                .resizable()
-                .scaledToFill()
-                .frame(width: 120, height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .contextMenu {
-                    ShareLink(
-                        item: ShareableImage(
-                            data: memoImage.data,
-                            suggestedName: "memo-\(Int(memoImage.addedAt.timeIntervalSince1970)).jpg"
-                        ),
-                        preview: SharePreview(displayTitle, image: Image(uiImage: ui))
-                    ) {
-                        Label("画像をシェア", systemImage: "square.and.arrow.up")
-                    }
-                    Button(role: .destructive) {
-                        modelContext.delete(memoImage)
-                    } label: {
-                        Label("削除", systemImage: "trash")
-                    }
+            Button {
+                galleryStartID = memoImage.persistentModelID
+                isShowingGallery = true
+            } label: {
+                Image(uiImage: ui)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 120, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+            .buttonStyle(.plain)
+            .contextMenu {
+                ShareLink(
+                    item: ShareableImage(
+                        data: memoImage.data,
+                        suggestedName: "memo-\(Int(memoImage.addedAt.timeIntervalSince1970)).jpg"
+                    ),
+                    preview: SharePreview(displayTitle, image: Image(uiImage: ui))
+                ) {
+                    Label("画像をシェア", systemImage: "square.and.arrow.up")
                 }
+                Button(role: .destructive) {
+                    modelContext.delete(memoImage)
+                } label: {
+                    Label("削除", systemImage: "trash")
+                }
+            }
         }
     }
 
@@ -491,6 +528,22 @@ struct BookDetailView: View {
         let processed = ImageDownscaler.downscaleToJPEG(data) ?? data
         let image = MemoImage(data: processed)
         book.images.append(image)
+    }
+
+    @MainActor
+    private func exportAllImages(_ book: SavedBook) async {
+        isExportingPhotos = true
+        defer { isExportingPhotos = false }
+        let datas = book.images.sorted { $0.addedAt < $1.addedAt }.map(\.data)
+        do {
+            let count = try await PhotoSaver.saveAll(datas)
+            exportToast = "\(count) 枚を「写真」に保存しました"
+            UINotificationFeedbackGenerator().notificationOccurred(.success)
+        } catch let e as PhotoSaver.SaveError {
+            exportToast = e.errorDescription
+        } catch {
+            exportToast = error.localizedDescription
+        }
     }
 
     enum LoadState {
