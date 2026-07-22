@@ -21,7 +21,7 @@
 <body>
 <p class="lang-switch"><a href="#en">English summary ↓</a></p>
 <h1>プライバシーポリシー — ホンダナ</h1>
-<p>最終更新日: 2026年5月3日</p>
+<p>最終更新日: 2026年7月22日</p>
 <p>このページは、iOS アプリ「ホンダナ」のプライバシーポリシーです。本アプリの開発者はあなたのプライバシーを尊重し、できるだけ少ない情報のみを取り扱います。</p>
 
 <h2>1. 開発者が収集しない情報</h2>
@@ -51,6 +51,21 @@
   <tr><td>Amazon (amazon.co.jp)</td><td>ISBN（あなたが「Safari で開く」をタップした時のみ）</td><td>商品ページ表示</td></tr>
 </table>
 
+<h2>3.5 「みんなの図書館」（公開コメント機能）について</h2>
+<p>バージョン 1.2.0 以降、任意で使える「みんなの図書館」機能があります。この機能で本にコメントを投稿すると、以下の情報が Apple の iCloud (CloudKit) パブリックデータベースに保存され、<strong>本アプリの全ユーザーに公開されます</strong>。</p>
+<ul>
+  <li>あなたが設定したニックネーム（本名である必要はありません）</li>
+  <li>投稿したコメントの本文と対象書籍（ISBN・タイトル）</li>
+  <li>フォロー関係（どのユーザーをフォローしているか）</li>
+</ul>
+<ul>
+  <li>投稿には iCloud サインインが必要ですが、開発者があなたの Apple ID・氏名・メールアドレスを知ることはありません（CloudKit の匿名ユーザー識別子のみを利用）</li>
+  <li>投稿しない限り何も送信・公開されません。閲覧のみの利用も可能です</li>
+  <li>自分の投稿はいつでもアプリ内から削除できます</li>
+  <li>不適切な投稿はコメントの長押しメニューから通報でき、開発者が確認のうえ削除します。特定ユーザーのブロック（非表示）も可能です</li>
+  <li>読書メモ・写真（第2条）はこの機能とは無関係で、引き続き端末内にのみ保存されます</li>
+</ul>
+
 <h2>4. Amazon アソシエイトプログラムについて</h2>
 <p>「Amazon を Safari で開く」「SNS にシェア」機能から生成される Amazon の URL には、開発者の Amazon アソシエイト ID (<code>bigdrives-22</code>) が含まれます。あなたがそのリンク経由で購入された場合、開発者は紹介料を受け取ります。リンクの仕組み上 Amazon 側がクッキー等であなたを追跡する可能性があり、詳細は Amazon.co.jp のプライバシー規約をご確認ください。</p>
 
@@ -73,16 +88,19 @@
 <hr id="en">
 
 <h1>Privacy Policy — Bookshelf (ホンダナ)</h1>
-<p>Last updated: May 3, 2026</p>
+<p>Last updated: July 22, 2026</p>
 
 <h2>What we don't collect</h2>
-<p>The "Bookshelf" iOS app does not collect any personal information. There is no login, no account, no analytics tracking, and no advertising identifier usage.</p>
+<p>The "Bookshelf" iOS app does not collect any personal information such as your name or email address. There is no login, no account creation, no analytics tracking, and no advertising identifier usage.</p>
 
 <h2>What stays on your device</h2>
-<p>Your saved books, notes and attached photos are stored only on your device using Apple's SwiftData framework, and are removed when you delete the app.</p>
+<p>Your saved books, private notes and attached photos are stored only on your device using Apple's SwiftData framework, and are removed when you delete the app.</p>
 
 <h2>What is sent to external services</h2>
 <p>Only ISBN numbers or search keywords are sent over HTTPS to public book metadata APIs (openBD, NDL Search, Google Books) to retrieve information you requested. No user identifiers are sent.</p>
+
+<h2>Public comments ("Everyone's Library", v1.2.0+)</h2>
+<p>If you choose to post a comment on a book, your nickname, the comment text, the book's ISBN/title, and your follow relationships are stored in Apple's CloudKit public database and are visible to all users of the app. Posting requires an iCloud account, but the developer only receives CloudKit's anonymous user identifier — never your Apple ID, name, or email. You can delete your own posts, report inappropriate content, and block users in the app. Nothing is shared unless you post.</p>
 
 <h2>Amazon affiliate</h2>
 <p>URLs the app generates for Amazon include the developer's Amazon Associate tag (<code>bigdrives-22</code>); purchases made through these links may earn the developer a commission.</p>
