@@ -4,10 +4,11 @@
 
 ## 機能
 
-- バーコード(EAN-13 / ISBN)スキャン (`DataScannerViewController`, iOS 16+)
+- バーコード(EAN-13 / ISBN)スキャン (`AVCaptureSession` + `AVCaptureMetadataOutput`)
 - 書名・著者の全文検索（国立国会図書館サーチ OpenSearch API）
 - 書誌情報の表示（openBD: タイトル / 著者 / 出版社 / 発売日 / 書影 / 内容紹介）
 - ライブラリへの保存とメモ記入（SwiftData で永続化）
+- **みんなの図書館**（CloudKit パブリックDB）— 書籍への公開コメント投稿・閲覧、全体タイムライン、ユーザーフォロー（フォロー中フィード）、通報・ブロック。セットアップは `docs/CloudKitSetup.md` 参照
 - Amazon へのアフィリエイトリンク生成（`tag=bigdrives-22`、ISBN-13 → ISBN-10 変換にも対応）
 
 ## 必要環境
@@ -64,12 +65,20 @@ BarcodeReview/
 │   ├── BookService.swift         openBD クライアント
 │   └── AmazonAffiliateURL.swift  ISBN→アフィリエイトURL生成
 ├── Scanning/
-│   └── ScannerView.swift         DataScanner ラッパー
+│   └── ScannerView.swift         AVFoundation スキャナラッパー
 ├── Search/
 │   ├── SearchView.swift          検索画面
 │   └── NDLSearchService.swift    NDL OpenSearch (XML)
 ├── Library/
 │   └── LibraryView.swift         保存済み一覧
+├── Social/
+│   ├── SocialModels.swift        CloudKit スキーマ + コメント/プロフィール型
+│   ├── SocialService.swift       パブリックDBクライアント（投稿/フォロー/通報）
+│   ├── SocialFeedView.swift      「みんなの図書館」タブ（全体/フォロー中）
+│   ├── BookCommentsSection.swift 書籍詳細のコメント欄
+│   ├── UserProfileView.swift     ユーザーページ + フォローボタン
+│   ├── CommentRow.swift          コメント行（通報/ブロック/削除メニュー）
+│   └── NicknameSheet.swift       ニックネーム設定シート
 └── Detail/
-    └── BookDetailView.swift      書誌詳細 + メモ + Safari ボタン
+    └── BookDetailView.swift      書誌詳細 + メモ + みんなのコメント + Safari ボタン
 ```

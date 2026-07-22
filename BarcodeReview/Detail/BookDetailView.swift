@@ -62,6 +62,11 @@ struct BookDetailView: View {
                 memoSection
                 if let saved = savedBook { imagesSection(saved) }
                 actionButtons
+                BookCommentsSection(
+                    isbn13: isbn13,
+                    bookTitle: displayTitle,
+                    bookAuthor: displayAuthor
+                )
                 if case .loaded(let book) = loadState, let description = book.description {
                     descriptionSection(description)
                 }
